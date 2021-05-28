@@ -1,34 +1,34 @@
-import java.rmi.*;
 import java.util.Scanner;
-public class Game{
-        public Game(){
-            keyboardSc = new Scanner(System.in);
-            try
-            {
-                ttt = (tttInterface) Naming.lookup("rmi://192.168.1.247/startTTTserver");
-            }
-            catch (Exception e)
-            {
-                System.out.println("Falhou o arranque do Cliente.\n"+e);
-                System.out.println("Certifique-se que tanto o Servidor de Registos como a Aplicação Servidora estão a correr correctamente");
-                System.exit(0);
-            }
-        }
+import java.rmi.RemoteException;
+public class Game {
+    private TTTService ttt;
+    private Scanner keyboardSc;
+    private int winner = 0;
+    private int player = 1;
+    public Game(TTTService _ttt) throws RemoteException {
 
-        Scanner keyboardSc;
-        int winner = 0;
-        int player = 1;
-        public int readPlay() {
-            int play;
-            do {
-                System.out.printf("\nPlayer %d, please enter the number of the square " + "where you want to place your %c (or 0 to refresh the board): \n",
-                player, (player == 1) ? 'X' : 'O');
+        ttt = _ttt;
+        keyboardSc = new Scanner(System.in);
 
-                play = keyboardSc.nextInt();
-            } while (play > 9 || play < 0);
-            return play;
-        }
-    public void playGame() {
+    }
+    public int readPlay() throws RemoteException{
+        int play;
+        do {
+            System.out.printf("\nPlayer %d, please enter the number of the square "+ "where you want to place your %c (or 0 to refresh the board): \n", player, (player == 1) ? 'X' : 'O');
+
+            play = keyboardSc.nextInt();
+
+            System.out.println(play);
+            if(play == 11){
+                System.out.println("foi um 11");
+                ttt.removeLastPlay();
+                play = 0;
+            }
+
+        } while (play > 9 || play < 0);
+        return play;
+    }
+    public void playGame() throws RemoteException{
         int play;
         boolean playAccepted;
         do {
@@ -48,20 +48,13 @@ public class Game{
             winner = ttt.checkWinner();
         } while (winner == -1);
     }
-    public void congratulate() {
+
+    public void congratulate() throws RemoteException{
         if (winner == 2)
             System.out.printf("\nHow boring, it is a draw\n");
         else
-            System.out.printf(
+            System.out.printf("\nCongratulations, player %d, YOU ARE THE WINNER!\n",winner);
 
-                    "\nCongratulations, player %d, YOU ARE THE WINNER!\n",
-
-        winner);
-
-    }
-    public static void main(String[] args) {
-        Game g = new Game();
-        g.playGame();
-        g.congratulate();
+        ttt.restart();
     }
 }
